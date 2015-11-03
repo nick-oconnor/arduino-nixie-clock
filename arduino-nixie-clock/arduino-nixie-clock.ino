@@ -44,8 +44,10 @@ void updateTime()
 
 void setTime(unsigned short new_hour, unsigned short new_minute, unsigned short new_second)
 {
+  hour = new_hour;
+  minute = new_minute;
+  second = new_second;
   milliseconds = (new_hour * 60 * 60 + new_minute * 60 + new_second) * 1000;
-  updateTime();
 }
 
 void displayDigit(unsigned short digit, unsigned short pin)

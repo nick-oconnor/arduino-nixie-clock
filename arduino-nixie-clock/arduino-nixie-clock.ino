@@ -1,20 +1,20 @@
-#define DECODER_A   0
-#define DECODER_B   1
-#define DECODER_C   2
-#define DECODER_D   3
+#define DECODER_A   2
+#define DECODER_B   3
+#define DECODER_C   4
+#define DECODER_D   5
 
-#define HOUR_10     4
-#define HOUR_1      5
-#define MINUTE_10   6
-#define MINUTE_1    7
-#define SECOND_10   8
-#define SECOND_1    9
+#define HOUR_10     6
+#define HOUR_1      7
+#define MINUTE_10   8
+#define MINUTE_1    9
+#define SECOND_10   10
+#define SECOND_1    11
 
-#define SET_HOUR    10
-#define SET_MINUTE  11
+#define SET_HOUR    12
+#define SET_MINUTE  13
 
-#define BLANKING_US 100
-#define DISPLAY_MS  1
+#define DISPLAY_MS  2
+#define BLANKING_US 200
 
 volatile unsigned long milliseconds = 0;
 unsigned short hour, minute, second;
@@ -24,8 +24,8 @@ ISR(TIMER2_OVF_vect)
 {
   milliseconds++;
   
-  if(milliseconds >= 12 * 60 * 60 * 1000)
-  { 
+  if (milliseconds >= (unsigned long)12 * 60 * 60 * 1000)
+  {
     milliseconds = 0;
   }
   
@@ -111,11 +111,11 @@ void loop()
   {
     if (minute == 59)
     {
-      setTime(hour, 0, second);
+      setTime(hour, 0, 0);
     }
     else
     {
-      setTime(hour, minute + 1, second);
+      setTime(hour, minute + 1, 0);
     }
     
     minuteIncremented = true;

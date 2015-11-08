@@ -17,37 +17,23 @@
 #define BLANKING_US 200
 
 volatile unsigned long milliseconds = 0;
-unsigned short hour, minute, second;
+const unsigned long millisecondReset = (unsigned long)12 * 60 * 60 * 1000 - 1,
+                    secondDivisor = 1000,
+                    minuteDivisor = secondDivisor * 60,
+                    hourDivisor = minuteDivisor * 60;
 bool hourIncremented = false, minuteIncremented = false;
 
 ISR(TIMER2_OVF_vect)
 {
   milliseconds++;
   
-  if (milliseconds >= (unsigned long)12 * 60 * 60 * 1000)
+  if (milliseconds > millisecondReset)
   {
-    milliseconds = 0;
+    milliseconds -= millisecondReset;
   }
   
   TCNT2 = 130;
   TIFR2 = 0x00;
-}
-
-void updateTime()
-{
-  unsigned short seconds = milliseconds / 1000;
-  
-  hour = seconds / 60 / 60 % 12;
-  minute = seconds / 60 % 60;
-  second = seconds % 60;
-}
-
-void setTime(unsigned short new_hour, unsigned short new_minute, unsigned short new_second)
-{
-  hour = new_hour;
-  minute = new_minute;
-  second = new_second;
-  milliseconds = (new_hour * 60 * 60 + new_minute * 60 + new_second) * 1000;
 }
 
 void displayDigit(unsigned short digit, unsigned short pin)
@@ -89,35 +75,27 @@ void setup()
 
 void loop()
 {
-  unsigned short displayHour;
-  bool setHourPressed = !digitalRead(SET_HOUR), setMinutePressed = !digitalRead(SET_MINUTE);
+  unsigned short hour = milliseconds / hourDivisor % 12,
+                 minute = milliseconds / minuteDivisor % 60,
+                 second = milliseconds / secondDivisor % 60,
+                 displayHour = hour;
+  bool setHourPressed = !digitalRead(SET_HOUR),
+       setMinutePressed = !digitalRead(SET_MINUTE);
 
-  updateTime();
-
+  if (hour == 0)
+  {
+    displayHour = 12;
+  }
+  
   if (setHourPressed && !hourIncremented)
   {
-    if (hour == 11)
-    {
-      setTime(0, minute, second);
-    }
-    else
-    {
-      setTime(hour + 1, minute, second);
-    }
-    
+    milliseconds += hourDivisor;
     hourIncremented = true;
   }
   else if (setMinutePressed && !minuteIncremented)
   {
-    if (minute == 59)
-    {
-      setTime(hour, 0, 0);
-    }
-    else
-    {
-      setTime(hour, minute + 1, 0);
-    }
-    
+    milliseconds += minuteDivisor;
+    milliseconds -= milliseconds % minuteDivisor;
     minuteIncremented = true;
   }
   else if (!setHourPressed && hourIncremented)
@@ -127,15 +105,6 @@ void loop()
   else if (!setMinutePressed && minuteIncremented)
   {
     minuteIncremented = false;
-  }
-
-  if (hour == 0)
-  {
-    displayHour = 12;
-  }
-  else
-  {
-    displayHour = hour;
   }
   
   displayDigit(displayHour / 10, HOUR_10);

@@ -1,7 +1,7 @@
-#define DECODER_A   0
+#define DECODER_C   0
 #define DECODER_B   1
-#define DECODER_C   2
-#define DECODER_D   3
+#define DECODER_D   2
+#define DECODER_A   3
 
 #define SET_HOUR    4
 #define SET_MINUTE  5

@@ -54,17 +54,17 @@ void setup()
   pinMode(DECODER_B, OUTPUT);
   pinMode(DECODER_C, OUTPUT);
   pinMode(DECODER_D, OUTPUT);
-
+  
+  pinMode(SET_HOUR, INPUT_PULLUP);
+  pinMode(SET_MINUTE, INPUT_PULLUP);
+  
   pinMode(HOUR_10, OUTPUT);
   pinMode(HOUR_1, OUTPUT);
   pinMode(MINUTE_10, OUTPUT);
   pinMode(MINUTE_1, OUTPUT);
   pinMode(SECOND_10, OUTPUT);
   pinMode(SECOND_1, OUTPUT);
-
-  pinMode(SET_HOUR, INPUT_PULLUP);
-  pinMode(SET_MINUTE, INPUT_PULLUP);
-
+  
   TCCR2B = 0x00;
   TCNT2  = 130;
   TIFR2  = 0x00;
@@ -81,7 +81,7 @@ void loop()
                  displayHour = hour;
   bool setHourPressed = !digitalRead(SET_HOUR),
        setMinutePressed = !digitalRead(SET_MINUTE);
-
+  
   if (hour == 0)
   {
     displayHour = 12;

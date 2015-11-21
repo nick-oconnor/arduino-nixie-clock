@@ -16,8 +16,8 @@
 #define DISPLAY_MS  2
 #define BLANKING_US 200
 
-volatile unsigned long milliseconds = 0;
-const unsigned long millisecondReset = (unsigned long)12 * 60 * 60 * 1000 - 1,
+volatile unsigned long milliseconds;
+const unsigned long millisecondReset = (unsigned long)12 * 60 * 60 * 1000,
                     secondDivisor = 1000,
                     minuteDivisor = secondDivisor * 60,
                     hourDivisor = minuteDivisor * 60;
@@ -27,7 +27,7 @@ ISR(TIMER2_OVF_vect)
 {
   milliseconds++;
   
-  if (milliseconds > millisecondReset)
+  if (milliseconds >= millisecondReset)
   {
     milliseconds -= millisecondReset;
   }
@@ -71,6 +71,23 @@ void setup()
   TIMSK2 = 0x01;
   TCCR2A = 0x00;
   TCCR2B = 0x05;
+  
+  milliseconds = 0;
+  
+  for (unsigned short i = 0; i <= 9; i++)
+  {
+    while (milliseconds < 500 * (i + 1))
+    {
+      displayDigit(i, HOUR_10);
+      displayDigit(i, HOUR_1);
+      displayDigit(i, MINUTE_10);
+      displayDigit(i, MINUTE_1);
+      displayDigit(i, SECOND_10);
+      displayDigit(i, SECOND_1);
+    }
+  }
+  
+  milliseconds = 0;
 }
 
 void loop()

@@ -16,12 +16,13 @@
 #define DISPLAY_MS  2
 #define BLANKING_US 200
 
-volatile unsigned long milliseconds;
+volatile unsigned long milliseconds = 0;
 const unsigned long millisecondReset = (unsigned long)12 * 60 * 60 * 1000,
                     secondDivisor = 1000,
                     minuteDivisor = secondDivisor * 60,
                     hourDivisor = minuteDivisor * 60;
-bool hourIncremented = false, minuteIncremented = false;
+bool hourIncremented = false,
+     minuteIncremented = false;
 
 ISR(TIMER2_OVF_vect)
 {
@@ -71,38 +72,15 @@ void setup()
   TIMSK2 = 0x01;
   TCCR2A = 0x00;
   TCCR2B = 0x05;
-  
-  milliseconds = 0;
-  
-  for (unsigned short i = 0; i <= 9; i++)
-  {
-    while (milliseconds < 500 * (i + 1))
-    {
-      displayDigit(i, HOUR_10);
-      displayDigit(i, HOUR_1);
-      displayDigit(i, MINUTE_10);
-      displayDigit(i, MINUTE_1);
-      displayDigit(i, SECOND_10);
-      displayDigit(i, SECOND_1);
-    }
-  }
-  
-  milliseconds = 0;
 }
 
 void loop()
 {
   unsigned short hour = milliseconds / hourDivisor % 12,
                  minute = milliseconds / minuteDivisor % 60,
-                 second = milliseconds / secondDivisor % 60,
-                 displayHour = hour;
+                 second = milliseconds / secondDivisor % 60;
   bool setHourPressed = !digitalRead(SET_HOUR),
        setMinutePressed = !digitalRead(SET_MINUTE);
-  
-  if (hour == 0)
-  {
-    displayHour = 12;
-  }
   
   if (setHourPressed && !hourIncremented)
   {
@@ -123,9 +101,18 @@ void loop()
   {
     minuteIncremented = false;
   }
+
+  if (milliseconds <= 9 * secondDivisor)
+  {
+    hour = minute = second = second * 11;
+  }
+  else if (hour == 0)
+  {
+    hour = 12;
+  }
   
-  displayDigit(displayHour / 10, HOUR_10);
-  displayDigit(displayHour % 10, HOUR_1);
+  displayDigit(hour / 10, HOUR_10);
+  displayDigit(hour % 10, HOUR_1);
   displayDigit(minute / 10, MINUTE_10);
   displayDigit(minute % 10, MINUTE_1);
   displayDigit(second / 10, SECOND_10);

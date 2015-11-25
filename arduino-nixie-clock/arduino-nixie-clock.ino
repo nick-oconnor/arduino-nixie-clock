@@ -102,7 +102,7 @@ void loop()
     minuteIncremented = false;
   }
 
-  if (milliseconds <= 9 * secondDivisor)
+  if (milliseconds < 10 * secondDivisor)
   {
     hour = minute = second = second * 11;
   }

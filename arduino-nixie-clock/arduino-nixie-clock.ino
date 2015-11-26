@@ -16,25 +16,21 @@
 #define DISPLAY_MS  2
 #define BLANKING_US 200
 
-volatile unsigned long milliseconds = 0;
-const unsigned long millisecondReset = (unsigned long)12 * 60 * 60 * 1000,
+extern volatile unsigned long timer0_millis;
+const unsigned long millisMax = (unsigned long)12 * 60 * 60 * 1000,
                     secondDivisor = 1000,
                     minuteDivisor = secondDivisor * 60,
                     hourDivisor = minuteDivisor * 60;
 bool hourIncremented = false,
      minuteIncremented = false;
 
-ISR(TIMER2_OVF_vect)
+void addMillis(unsigned long offset)
 {
-  milliseconds++;
+  uint8_t oldSREG = SREG;
   
-  if (milliseconds >= millisecondReset)
-  {
-    milliseconds -= millisecondReset;
-  }
-  
-  TCNT2 = 130;
-  TIFR2 = 0x00;
+  cli();
+  timer0_millis += offset;
+  SREG = oldSREG;
 }
 
 void displayDigit(unsigned short digit, unsigned short pin)
@@ -65,32 +61,26 @@ void setup()
   pinMode(MINUTE_1, OUTPUT);
   pinMode(SECOND_10, OUTPUT);
   pinMode(SECOND_1, OUTPUT);
-  
-  TCCR2B = 0x00;
-  TCNT2  = 130;
-  TIFR2  = 0x00;
-  TIMSK2 = 0x01;
-  TCCR2A = 0x00;
-  TCCR2B = 0x05;
 }
 
 void loop()
 {
-  unsigned short hour = milliseconds / hourDivisor % 12,
-                 minute = milliseconds / minuteDivisor % 60,
-                 second = milliseconds / secondDivisor % 60;
+  if (millis() >= millisMax)
+  {
+    addMillis(-millisMax);
+  }
+  
   bool setHourPressed = !digitalRead(SET_HOUR),
        setMinutePressed = !digitalRead(SET_MINUTE);
   
   if (setHourPressed && !hourIncremented)
   {
-    milliseconds += hourDivisor;
+    addMillis(hourDivisor);
     hourIncremented = true;
   }
   else if (setMinutePressed && !minuteIncremented)
   {
-    milliseconds += minuteDivisor;
-    milliseconds -= milliseconds % minuteDivisor;
+    addMillis(minuteDivisor - millis() % minuteDivisor);
     minuteIncremented = true;
   }
   else if (!setHourPressed && hourIncremented)
@@ -101,8 +91,12 @@ void loop()
   {
     minuteIncremented = false;
   }
-
-  if (milliseconds < 10 * secondDivisor)
+  
+  unsigned short hour = millis() / hourDivisor % 12,
+                 minute = millis() / minuteDivisor % 60,
+                 second = millis() / secondDivisor % 60;
+  
+  if (millis() < 10 * secondDivisor)
   {
     hour = minute = second = second * 11;
   }

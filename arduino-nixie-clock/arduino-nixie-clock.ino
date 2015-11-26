@@ -64,12 +64,7 @@ void setup()
 }
 
 void loop()
-{
-  if (millis() >= millisMax)
-  {
-    addMillis(-millisMax);
-  }
-  
+{ 
   bool setHourPressed = !digitalRead(SET_HOUR),
        setMinutePressed = !digitalRead(SET_MINUTE);
   
@@ -90,6 +85,11 @@ void loop()
   else if (!setMinutePressed && minuteIncremented)
   {
     minuteIncremented = false;
+  }
+
+  if (millis() >= millisMax)
+  {
+    addMillis(-millisMax);
   }
   
   unsigned short hour = millis() / hourDivisor % 12,

@@ -17,14 +17,14 @@
 #define BLANKING_US 200
 
 extern volatile unsigned long timer0_millis;
-const unsigned long millisMax = (unsigned long)12 * 60 * 60 * 1000,
+const unsigned long maxMilliseconds = (unsigned long)12 * 60 * 60 * 1000,
                     secondDivisor = 1000,
                     minuteDivisor = secondDivisor * 60,
                     hourDivisor = minuteDivisor * 60;
 bool hourIncremented = false,
      minuteIncremented = false;
 
-void addMillis(unsigned long offset)
+void offsetMillis(unsigned long offset)
 {
   uint8_t oldSREG = SREG;
   
@@ -64,18 +64,19 @@ void setup()
 }
 
 void loop()
-{ 
+{
+  unsigned long milliseconds = millis();
   bool setHourPressed = !digitalRead(SET_HOUR),
        setMinutePressed = !digitalRead(SET_MINUTE);
   
   if (setHourPressed && !hourIncremented)
   {
-    addMillis(hourDivisor);
+    offsetMillis(hourDivisor);
     hourIncremented = true;
   }
   else if (setMinutePressed && !minuteIncremented)
   {
-    addMillis(minuteDivisor - millis() % minuteDivisor);
+    offsetMillis(minuteDivisor - milliseconds % minuteDivisor);
     minuteIncremented = true;
   }
   else if (!setHourPressed && hourIncremented)
@@ -86,19 +87,19 @@ void loop()
   {
     minuteIncremented = false;
   }
-
-  if (millis() >= millisMax)
+  
+  if (milliseconds >= maxMilliseconds)
   {
-    addMillis(-millisMax);
+    offsetMillis(-maxMilliseconds);
   }
   
-  unsigned short hour = millis() / hourDivisor % 12,
-                 minute = millis() / minuteDivisor % 60,
-                 second = millis() / secondDivisor % 60;
+  unsigned short hour = milliseconds / hourDivisor % 12,
+                 minute = milliseconds / minuteDivisor % 60,
+                 second = milliseconds / secondDivisor % 60;
   
-  if (millis() < 10 * secondDivisor)
+  if (milliseconds < 10 * secondDivisor)
   {
-    hour = minute = second = second * 11;
+    hour = minute = second *= 11;
   }
   else if (hour == 0)
   {

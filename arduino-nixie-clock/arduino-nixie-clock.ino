@@ -1,22 +1,28 @@
-#define DECODER_C   0
-#define DECODER_B   1
-#define DECODER_D   2
-#define DECODER_A   3
+#include <Ewma.h>
 
-#define SET_HOUR    4
-#define SET_MINUTE  5
+#define DECODER_C     0
+#define DECODER_B     1
 
-#define HOUR_10     6
-#define HOUR_1      7
-#define MINUTE_10   8
-#define MINUTE_1    9
-#define SECOND_10   10
-#define SECOND_1    11
+#define SET_HOUR      2
+#define SET_MINUTE    3
 
-#define DISPLAY_MS  2
-#define BLANKING_US 200
+#define DECODER_D     4
+#define DECODER_A     5
+
+#define HOUR_10       6
+#define HOUR_1        7
+#define MINUTE_10     8
+#define MINUTE_1      9
+#define SECOND_10     10
+#define SECOND_1      11
+
+#define DISPLAY_MS    2
+#define BLANKING_US   200
+
+#define FILTER_ALPHA  0.1
 
 extern volatile unsigned long timer0_millis;
+
 const unsigned long maxMilliseconds = (unsigned long) 12 * 60 * 60 * 1000,
         secondDivisor = 1000,
         minuteDivisor = secondDivisor * 60,
@@ -24,12 +30,12 @@ const unsigned long maxMilliseconds = (unsigned long) 12 * 60 * 60 * 1000,
 bool hourIncremented = false,
         minuteIncremented = false;
 
-void offsetMillis(unsigned long offset) {
-    uint8_t oldSREG = SREG;
+Ewma setHourFilter(FILTER_ALPHA), setMinuteFilter(FILTER_ALPHA);
 
-    cli();
+void offsetMillis(unsigned long offset) {
+    noInterrupts();
     timer0_millis += offset;
-    SREG = oldSREG;
+    interrupts();
 }
 
 void displayDigit(unsigned short digit, unsigned short pin) {
@@ -62,8 +68,8 @@ void setup() {
 
 void loop() {
     unsigned long milliseconds = millis();
-    bool setHourPressed = !digitalRead(SET_HOUR),
-            setMinutePressed = !digitalRead(SET_MINUTE);
+    bool setHourPressed = setHourFilter.filter(!digitalRead(SET_HOUR)) > 0.5,
+            setMinutePressed = setMinuteFilter.filter(!digitalRead(SET_MINUTE)) > 0.5;
 
     if (setHourPressed && !hourIncremented) {
         offsetMillis(hourDivisor);
